@@ -74,7 +74,7 @@ str(Titanic.all)
 Titanic.all$IsChild <- as.factor(Titanic.all$IsChild)
 Titanic.all$Is_Married <- as.factor(Titanic.all$Is_Married)
 Titanic.all$Is_Alone <- as.factor(Titanic.all$Is_Alone)
-
+Titanic.all$Survived<- as.factor(Titanic.all$Survived)
 ######-----------Outlier treatment-------------###########################
 ggplot(data = Titanic.all, aes(x= Pclass, y= Fare, fill = Pclass))+ geom_boxplot()
 boxplot(Titanic.all$Fare)$out
@@ -123,7 +123,30 @@ Embarked_survived_plot
 Fare_survived_plot<-ggplot(data = Titanic.train, aes(x= Fare, fill = factor(Survived)))+ geom_histogram(bins = 5)
 Fare_survived_plot
 
-
 #############################################################################################
+
+######-------------Spliting Titanic.train into train and validation set----------############
+set.seed(24)
+spl<- sample.split(Titanic.train$Survived, 0.7)
+
+data.train<- Titanic.train[spl==TRUE, ]
+data.test<- Titanic.train[spl==FALSE,]
+
+
+summary(data.train$Survived)
+summary(data.test$Survived)
+
+
+##########-----------Model building-----------------------#########################
+library(lmtest)
+library(caTools)
+
+str(Titanic.train)
+predictors<- paste(colnames(Titanic.train)[-1], sep = "+", collapse = '+')
+
+
+model1<- glm(Survived~Pclass+Sex+Age+SibSp+Parch+Fare+Embarked+IsChild+Is_Married+Is_Alone,
+             data = Titanic.train, family = 'binomial')
+summary(model1)
 
 
