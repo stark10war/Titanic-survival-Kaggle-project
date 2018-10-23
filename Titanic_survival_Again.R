@@ -69,26 +69,55 @@ Titanic.all$Fare[is.na(Titanic.all$Fare)]<- mean(Titanic.all$Fare[Pclass==3&IsCh
 colnames(Titanic.all)
 Titanic.all<- Titanic.all[, -c(1,4,9,11)]
 
+str(Titanic.all)
+
+Titanic.all$IsChild <- as.factor(Titanic.all$IsChild)
+Titanic.all$Is_Married <- as.factor(Titanic.all$Is_Married)
+Titanic.all$Is_Alone <- as.factor(Titanic.all$Is_Alone)
+
 ##########----------------SEPERATING tRAIN AND TEST SETS -----------####################
 
 Titanic.test<- Titanic.all[is.na(Titanic.all$Survived),-c(1)]
 Titanic.train<- Titanic.all[!is.na(Titanic.all$Survived),]
 
+dim(Titanic.test)
+dim(Titanic.train)
+
+
 #Writing to csv
 getwd()
+write.csv(Titanic.train, "train_cleaned.csv",row.names = FALSE)
+write.csv(Titanic.test, "test_cleaned.csv", row.names = FALSE)
+
+
+# ########################## DATA VISUALISATION ################################################################
+library(ggplot2)
+
+sex_survival_plot<-ggplot(data = Titanic.train, aes(x= factor(Survived), fill = Sex))+ geom_bar() + labs(title = "Sex vs Survival", x= "Survived", y = "No. of Passengers", fill ="Survived")
+sex_survival_plot<- sex_survival_plot+ theme(plot.title = element_text(hjust = 0.5), panel.background = element_rect(fill = "lemonchiffon2" ))
+sex_survival_plot
+
+Age_survival_plot<-ggplot(data = Titanic.train, aes(x= Age, fill = factor(Survived)))+ geom_histogram(bins = 10)
+Age_survival_plot<- Age_survival_plot + labs(title = "Age vs Survival", x= "Age", y = "No. of Passengers", fill= "Survived")+ theme(plot.title = element_text(hjust = 0.5), panel.background = element_rect(fill = "lemonchiffon2" ))
+Age_survival_plot
+
+
+Pclass_Survival_plot<- ggplot(data = Titanic.train, aes(x= Pclass, fill = factor(Survived)))+ geom_bar()
+Pclass_Survival_plot<-Pclass_Survival_plot+ labs(title = "class vs Survival", x= "Pclass", y = "No. of Passengers", fill ="Survived")+ theme(plot.title = element_text(hjust = 0.5), panel.background = element_rect(fill = "lemonchiffon2" ))
+Pclass_Survival_plot
+
+
+Embarked_survived_plot<-ggplot(data = Titanic.train, aes(x= Embarked, fill = factor(Survived)))+ geom_bar()
+Embarked_survived_plot
+
+
+Fare_survived_plot<-ggplot(data = Titanic.train, aes(x= Fare, fill = factor(Survived)))+ geom_histogram(bins = 5)
+Fare_survived_plot
+
+
+#############################################################################################
 
 
 
-# 
-# ########################## DATA VISUALISATION #######################################
-# library(ggplot2)
-# ggplot(data = Titanic.train, aes(x= factor(Survived), fill = Sex))+ geom_bar()+facet_grid(.~Embarked)  
-# ggplot(data = Titanic.train, aes(x= Age, fill = factor(Survived)))+ geom_histogram(bins = 10) 
-# ggplot(data = Titanic.train, aes(x= factor(Parch), fill = factor(Survived)))+ geom_bar() 
-# ggplot(data = Titanic.train, aes(x= Age, fill = factor(Survived)))+ geom_histogram(bins = 20)-> obj1 
-# ggplot(data = Titanic.train, aes(x= Embarked, fill = factor(Survived)))+ geom_bar() 
-# 
-# ggplot(data = Titanic.train, aes(x= Fare, col = factor(Survived)))+ geom_freqpoly(bins=15)
-# 
-# obj1<-obj1+labs(title = "Age vs Survival", y= "No. of passangers survived", fill = "Survived")+theme(panel.background = element_rect(fill = "palegreen1"),plot.title = element_text(hjust = 0.5,face = "bold",color = "cadetblue"))
-# 
+
+
