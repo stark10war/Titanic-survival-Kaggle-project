@@ -12,7 +12,19 @@ library(randomForest)
 library(neuralnet)
 library(magrittr)
 library(lubridate)
-
+library(caret)
+library(ggplot2)
+library(MASS)
+library(car)
+library(mlogit)
+library(sqldf)
+library(Hmisc)
+library(aod)
+library(BaylorEdPsych)
+library(ResourceSelection)
+library(pROC)
+library(ROCR)
+library(caTools)
 #importing dataset
 path<- "D:/Shashank R files/Titanic dataset/Titanic-survival-Kaggle-project"
 setwd(path)
@@ -145,8 +157,28 @@ str(Titanic.train)
 predictors<- paste(colnames(Titanic.train)[-1], sep = "+", collapse = '+')
 
 
-model1<- glm(Survived~Pclass+Sex+Age+SibSp+Parch+Fare+Embarked+IsChild+Is_Married+Is_Alone,
-             data = Titanic.train, family = 'binomial')
+model1<- glm(Survived~Pclass+Sex+Age+SibSp+Parch+I(Embarked=='S')+IsChild+ I(Is_Married=="unmarried"),
+             data = data.train, family = 'binomial')
 summary(model1)
+
+
+
+vif(model1)
+
+waldtest(model1)
+
+
+modelchi<- model1$null.deviance - model1$deviance
+
+chidf <- model1$df.null -model1$df.residual
+chisq.prob <- 1 - pchisq(modelchi, chidf)
+format(round(chisq.prob, 2), nsmall = 5)
+
+
+
+library(DescTools)
+PseudoR2(model1)
+
+
 
 
