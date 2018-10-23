@@ -75,6 +75,15 @@ Titanic.all$IsChild <- as.factor(Titanic.all$IsChild)
 Titanic.all$Is_Married <- as.factor(Titanic.all$Is_Married)
 Titanic.all$Is_Alone <- as.factor(Titanic.all$Is_Alone)
 
+######-----------Outlier treatment-------------###########################
+ggplot(data = Titanic.all, aes(x= Pclass, y= Fare, fill = Pclass))+ geom_boxplot()
+boxplot(Titanic.all$Fare)$out
+
+
+#Replacing values of outlier by 99th percentile
+H<-quantile(Titanic.train$Fare, probs = 0.99)
+Titanic.all$Fare[Titanic.all$Fare>H]<- H
+
 ##########----------------SEPERATING tRAIN AND TEST SETS -----------####################
 
 Titanic.test<- Titanic.all[is.na(Titanic.all$Survived),-c(1)]
@@ -116,8 +125,5 @@ Fare_survived_plot
 
 
 #############################################################################################
-
-
-
 
 
