@@ -25,18 +25,21 @@ library(ResourceSelection)
 library(pROC)
 library(ROCR)
 library(caTools)
+library(DescTools)
+library(Metrics)
 #importing dataset
 path<- "D:/Shashank R files/Titanic dataset/Titanic-survival-Kaggle-project"
 setwd(path)
 
 Titanic.train<- read.csv("train.csv")
+Titanic.train1<- Titanic.train #Backup file
 
 head(Titanic.train)
 str(Titanic.train)
 dim(Titanic.train)
 
 Titanic.test<- read.csv("test.csv")
-
+Titanic.test1<- Titanic.test #Backup file
 head(Titanic.test)
 str(Titanic.test)
 dim(Titanic.test)
@@ -150,10 +153,14 @@ summary(data.test$Survived)
 
 
 ##########-----------Model building-----------------------#########################
+
+################---------LOGISTIC REGRESSION-------------------####################
 library(lmtest)
 library(caTools)
 
 str(Titanic.train)
+
+#Getting formula
 predictors<- paste(colnames(Titanic.train)[-1], sep = "+", collapse = '+')
 
 
@@ -161,13 +168,13 @@ model1<- glm(Survived~Pclass+Sex+Age+SibSp+Parch+I(Embarked=='S')+IsChild+ I(Is_
              data = data.train, family = 'binomial')
 summary(model1)
 
-
-
+#Checking multicolinearity
 vif(model1)
 
-waldtest(model1)
+waldtest(model1)#Overall significance test
 
 
+###################### Lagrange Multiplier or Score test ###########
 modelchi<- model1$null.deviance - model1$deviance
 
 chidf <- model1$df.null -model1$df.residual
@@ -175,9 +182,76 @@ chisq.prob <- 1 - pchisq(modelchi, chidf)
 format(round(chisq.prob, 2), nsmall = 5)
 
 
-
+########### GOODNESS OF FIT A.k.a R square ##########
 library(DescTools)
 PseudoR2(model1)
+
+############## Accuracy on train set #################
+
+pred_train<- predict(model1, newdata = data.train, type = 'response')
+
+roc_curve<- roc(response= data.train$Survived, predictor = pred_train, levels= rev(levels(data.train$Survived)))
+plot(roc_curve)
+
+coords(roc_curve, 'best')
+
+predclass_train <-ifelse(pred_train>coords(roc_curve,"best")[1],1,0)
+confusionMatrix(data = predclass_train, reference = data.train$Survived)
+
+
+
+############Accuracy on test set #################################
+pred_test<- predict(model1, newdata = data.test, type = 'response')
+
+
+roc_curve<- roc(response= data.test$Survived, predictor = pred_test, levels= rev(levels(data.test$Survived)))
+plot(roc_curve)
+
+
+
+predclass_test <-ifelse(pred_test>coords(roc_curve,"best")[1],1,0)
+confusionMatrix(data = predclass_test, reference = data.test$Survived)
+
+
+###################----Building model on full data--------#####################3
+
+
+final_model<- glm(Survived~Pclass+Sex+Age+SibSp+Parch+I(Embarked=='S')+IsChild+ I(Is_Married=="unmarried"),
+             data = Titanic.train, family = 'binomial')
+summary(final_model)
+
+
+pred_all_train<- predict(final_model, newdata = Titanic.train, type = 'response')
+
+roc_curve<- roc(response= Titanic.train$Survived, predictor = pred_all_train, levels= rev(levels(Titanic.train$Survived)))
+plot(roc_curve)
+
+coords(roc_curve, 'best')
+
+predclass_all_train <-ifelse(pred_all_train>coords(roc_curve,"best")[1],1,0)
+confusionMatrix(data = predclass_all_train, reference = Titanic.train$Survived)
+
+threshold<- coords(roc_curve,"best")[1]
+
+
+
+
+
+################### Predicting on Final test set (Unseen data) #####################
+
+Predictions_final<- predict(final_model, newdata = Titanic.test, type = 'response')
+
+predclass_final<- ifelse(Predictions_final>threshold,1,0)
+
+#---------Storing the results-----------#
+getwd()
+results_final<-data.frame(Titanic.test1$PassengerId, predclass_final)
+results_final
+colnames(results_final)<- c("PassengerId","Survived")
+
+#write.csv(results_final, "submission_Logistic_final_model.csv", row.names = FALSE)
+
+
 
 
 
