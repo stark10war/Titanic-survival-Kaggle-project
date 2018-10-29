@@ -96,7 +96,7 @@ boxplot(Titanic.all$Fare)$out
 
 
 #Replacing values of outlier by 99th percentile
-H<-quantile(Titanic.train$Fare, probs = 0.99)
+H<-quantile(Titanic.all$Fare, probs = 0.99)
 Titanic.all$Fare[Titanic.all$Fare>H]<- H
 
 ##########----------------SEPERATING tRAIN AND TEST SETS -----------####################
@@ -250,6 +250,85 @@ results_final
 colnames(results_final)<- c("PassengerId","Survived")
 
 #write.csv(results_final, "submission_Logistic_final_model.csv", row.names = FALSE)
+
+
+Final_formula<- as.Formula(Survived~Pclass+Sex+Age+SibSp+Parch+I(Embarked=='S')+IsChild+ I(Is_Married=="unmarried"))
+
+############# Decision tree v 2.0 ######################################
+
+str(data.train)
+tree2<-rpart(Survived~Pclass+Sex+Age+SibSp+Parch+Embarked+IsChild+Is_Married+Fare,data = data.train)
+prp(tree2)
+
+pred_tree2<- predict(tree2, newdata = data.test, type = 'class')
+confusionMatrix(pred_tree2, data.test$Survived)
+
+##############  Random forest ############################################
+
+#---- Using for loop to get the score matrix
+#-----for 100 trees and and 9 mtry to find appropriate parameters -----
+
+scores<- matrix(nrow = 100, ncol = 9)
+for (i in 1:9) {
+for (j in 1:100) {
+  set.seed(24)
+  forest1<- randomForest(Survived~Pclass+Sex+Age+SibSp+Parch+Embarked+IsChild+Is_Married+Fare, data = data.train, ntree = j, mtry = i)
+  pred_forest<-predict(forest1,newdata = data.test, type = 'class')
+  acc<- accuracy(data.test$Survived, pred_forest)
+  scores[j,i]<- acc
+  scores
+  }  
+}
+
+max(scores) # this is the max score given by the random forest
+
+which(scores==max(scores),arr.ind = TRUE) # the row  gives the no of trees and col give the no of mtry
+
+
+
+#We are using 43 trees with 1 mtry as we get the max accuracy on the test set
+scores[43,1]
+
+############ BUlding random forest on full training data set ########################
+
+set.seed(24)
+final_forest<- randomForest(Survived~Pclass+Sex+Age+SibSp+Parch+Embarked+IsChild+Is_Married+Fare, data = Titanic.train, ntree = 43, mtry = 1)
+plot(final_forest)
+
+pred_final_forest<-predict(final_forest,newdata = Titanic.train, type = 'class')
+confusionMatrix(pred_final_forest, Titanic.train$Survived) # ACCuracy on full training set doesnt change so much hence the model doesnt seem to be overfitting
+
+############ PRedicting the results of the final test data set ##############
+
+pred_final_test<- predict(final_forest, newdata = Titanic.test, type = 'class')
+
+results_final_forest<-data.frame(Titanic.test1$PassengerId, pred_final_test)
+results_final_forest
+colnames(results_final_forest)<- c("PassengerId","Survived")
+
+#------saving the output on disk
+#write.csv(results_final_forest, "submission_forest_model.csv", row.names = FALSE)
+
+
+
+
+################# Neural network ###############################################
+
+library(dummies)
+colnames(Titanic.train)
+Titanic.train_dum<-dummy.data.frame(Titanic.train,names = c("Pclass","Sex","IsChild", "Is_Married", "Is_Alone","Embarked"),sep="_" , fun = as.factor)
+str(Titanic.train_dum)
+colnames(Titanic.train_dum)
+Titanic.train_dum<- Titanic.train_dum[,-c(2,6,11,14,16,19)]
+
+
+Titanic.test_dum<-dummy.data.frame(Titanic.test,names = c("Pclass","Sex","IsChild", "Is_Married", "Is_Alone","Embarked"),sep="_" , fun = as.factor)
+str(Titanic.test_dum)
+
+
+Titanic.test_dum<- subset(Titanic.test_dum, select = colnames(Titanic.train_dum[,-1]))
+str(Titanic.train_dum)
+str(Titanic.test_dum)
 
 
 
