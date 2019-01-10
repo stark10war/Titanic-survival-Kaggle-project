@@ -276,6 +276,10 @@ colnames(results)<- c("PassengerId", "Survived")
 
 write.csv(results,"Results.csv",row.names = FALSE)
 
+
+
+# the END
+
 ########################################################################################################
 
 
